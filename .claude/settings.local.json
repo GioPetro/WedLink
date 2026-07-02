@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git ls-remote *)",
+      "Bash(GIT_SSL_NO_VERIFY=true git ls-remote https://github.com/GioPetro/WedLInk.git)",
+      "Bash(git config *)",
+      "Bash(git --version)",
+      "Bash(git *)"
+    ]
+  }
+}
