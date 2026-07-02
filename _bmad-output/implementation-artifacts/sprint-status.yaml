@@ -1,0 +1,113 @@
+# generated: 2026-07-03 00:40
+# last_updated: 2026-07-03 00:40
+# project: Wedlink
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: {project-root}/_bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# Action Item Status:
+#   - open: Committed during a retrospective, not yet addressed
+#   - in-progress: Actively being worked on
+#   - done: Completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - Developer typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+# - Retrospective appends its action items to action_items; sprint-status surfaces open ones
+
+generated: 2026-07-03 00:40
+last_updated: 2026-07-03 00:40
+project: Wedlink
+project_key: NOKEY
+tracking_system: file-system
+story_location: "{project-root}/_bmad-output/implementation-artifacts"
+
+development_status:
+  epic-1: in-progress
+  1-1-project-scaffolding: ready-for-dev
+  1-2-auth-signup-login: ready-for-dev
+  1-3-core-invitation-fields-with-autosave: ready-for-dev
+  1-4-photo-upload-cover-gallery: ready-for-dev
+  1-5-color-font-picker: ready-for-dev
+  1-6-publish-flow-slug-qr-code: ready-for-dev
+  1-7-public-invitation-page: ready-for-dev
+  epic-1-retrospective: optional
+
+  epic-2: backlog
+  2-1-rsvp-field-configuration: backlog
+  2-2-public-rsvp-submission: backlog
+  2-3-guest-dashboard: backlog
+  2-4-manual-guest-management: backlog
+  2-5-csv-import-export: backlog
+  2-6-rsvp-email-notifications: backlog
+  epic-2-retrospective: optional
+
+  epic-3: backlog
+  3-1-deposit-checkout: backlog
+  3-2-payment-webhook-handling: backlog
+  3-3-payment-gating-enforcement: backlog
+  3-4-final-payment-collection: backlog
+  3-5-tier-feature-gating-utility: backlog
+  epic-3-retrospective: optional
+
+  epic-4: backlog
+  4-1-ai-style-generation-endpoint: backlog
+  4-2-ai-photo-studio-editor-ui: backlog
+  4-3-ai-multi-turn-refinement: backlog
+  4-4-ai-quota-cost-logging: backlog
+  4-5-ai-fallback-presets: backlog
+  4-6-ai-content-moderation: backlog
+  epic-4-retrospective: optional
+
+  epic-5: backlog
+  5-1-countdown-timer: backlog
+  5-2-venue-map-embed: backlog
+  5-3-seating-chart-builder: backlog
+  5-4-visit-analytics: backlog
+  5-5-add-to-calendar: backlog
+  epic-5-retrospective: optional
+
+  epic-6: backlog
+  6-1-seating-chart-pro: backlog
+  6-2-qr-seat-finder: backlog
+  6-3-gift-registry-display: backlog
+  6-4-hotel-recommendations: backlog
+  6-5-background-music: backlog
+  6-6-qr-photo-gallery: backlog
+  epic-6-retrospective: optional
+
+  epic-7: backlog
+  7-1-ui-state-polish: backlog
+  7-2-mobile-qa-pass: backlog
+  7-3-accessibility-pass: backlog
+  7-4-rsvp-load-testing: backlog
+  7-5-security-review: backlog
+  7-6-soft-launch: backlog
+  epic-7-retrospective: optional
+
+action_items: []
