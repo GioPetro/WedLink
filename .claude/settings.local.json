@@ -5,7 +5,30 @@
       "Bash(GIT_SSL_NO_VERIFY=true git ls-remote https://github.com/GioPetro/WedLInk.git)",
       "Bash(git config *)",
       "Bash(git --version)",
-      "Bash(git *)"
+      "Bash(git *)",
+      "Bash(mkdir -p \"_bmad-output/planning-artifacts\" \"_bmad-output/implementation-artifacts\")",
+      "Bash(cp \"GENERAL DOCUMENTATION PLAN/wedlink-app/docs/brief.md\" \"_bmad-output/planning-artifacts/brief.md\")",
+      "Bash(cp \"GENERAL DOCUMENTATION PLAN/wedlink-app/docs/competitive-analysis.md\" \"_bmad-output/planning-artifacts/competitive-analysis.md\")",
+      "Bash(cp \"GENERAL DOCUMENTATION PLAN/wedlink-app/docs/prd.md\" \"_bmad-output/planning-artifacts/prd.md\")",
+      "Bash(cp \"GENERAL DOCUMENTATION PLAN/wedlink-app/docs/architecture.md\" \"_bmad-output/planning-artifacts/architecture.md\")",
+      "Bash(docker --version)",
+      "Bash(docker compose *)",
+      "Bash(where.exe psql *)",
+      "Bash(where.exe postgres *)",
+      "Bash(powershell -Command \"Start-Process 'C:\\\\Program Files\\\\Docker\\\\Docker\\\\Docker Desktop.exe'\")",
+      "Bash(docker info *)",
+      "Bash(cp .env.example .env)",
+      "Bash(sed -i 's#DATABASE_URL=.*#DATABASE_URL=postgresql://wedlink_user:changeme@localhost:5432/wedlink#' .env)",
+      "Bash(docker exec *)",
+      "Bash(break)",
+      "Bash(npm run *)",
+      "Bash(curl -s http://localhost:3000/api/health)",
+      "Bash(curl -s http://localhost:3000/)",
+      "Bash(curl -s http://localhost:5173/)",
+      "Bash(curl -s http://localhost:5173/src/main.jsx)",
+      "Bash(curl *)",
+      "Bash(npm install *)",
+      "Bash(echo \"exit: $?\")"
     ]
   }
 }

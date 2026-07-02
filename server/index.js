@@ -4,6 +4,10 @@ import dotenv from 'dotenv';
 import { Pool } from 'pg';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import crypto from 'crypto';
 
 dotenv.config();
 
@@ -12,8 +16,25 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
+const uploadsDir = path.join(process.cwd(), 'server', 'uploads');
+fs.mkdirSync(uploadsDir, { recursive: true });
+
+// NFR8: validate size (<10MB) and MIME type before storage
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => cb(null, uploadsDir),
+    filename: (req, file, cb) => cb(null, `${crypto.randomUUID()}${path.extname(file.originalname)}`),
+  }),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    cb(allowed.includes(file.mimetype) ? null : new Error('Unsupported image type'), allowed.includes(file.mimetype));
+  },
+});
+
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static(uploadsDir));
 
 // Middleware: Auth verification
 const verifyToken = (req, res, next) => {
@@ -120,6 +141,82 @@ app.put('/api/invitations/:id', verifyToken, async (req, res) => {
   }
 });
 
+function slugify(text) {
+  return text
+    .toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '') // strip accents (Greek/Latin diacritics)
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '') || 'invitation';
+}
+
+// Story 1.6: Publish flow — generates a unique slug URL, no payment gate yet (Epic 3 adds that per NFR9)
+app.post('/api/invitations/:id/publish', verifyToken, async (req, res) => {
+  try {
+    const invResult = await pool.query('SELECT * FROM invitations WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
+    if (invResult.rows.length === 0) return res.status(404).json({ error: 'Not found' });
+    const invitation = invResult.rows[0];
+
+    let invitationUrl = invitation.invitation_url;
+    if (!invitationUrl) {
+      const base = slugify(`${invitation.couple_name_1 || ''}-${invitation.couple_name_2 || ''}`);
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const candidate = `${base}-${crypto.randomBytes(3).toString('hex')}`;
+        const exists = await pool.query('SELECT 1 FROM invitations WHERE invitation_url = $1', [candidate]);
+        if (exists.rows.length === 0) {
+          invitationUrl = candidate;
+          break;
+        }
+      }
+      if (!invitationUrl) return res.status(500).json({ error: 'Could not generate a unique invitation URL, try again' });
+    }
+
+    const result = await pool.query(
+      `UPDATE invitations SET invitation_url = $1, status = 'published', published_at = NOW(), updated_at = NOW()
+       WHERE id = $2 AND user_id = $3 RETURNING *`,
+      [invitationUrl, req.params.id, req.user.id]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Story 1.4: Cover + gallery photo upload (local disk in dev; swap for Cloudinary in production, see docs/INFRASTRUCTURE.md)
+app.post('/api/invitations/:id/photos', verifyToken, (req, res) => {
+  upload.single('photo')(req, res, async (err) => {
+    if (err) return res.status(400).json({ error: err.message });
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+    const type = req.body.type === 'gallery' ? 'gallery' : 'cover';
+    const photoUrl = `/uploads/${req.file.filename}`;
+
+    try {
+      const invResult = await pool.query('SELECT user_id, gallery_photos FROM invitations WHERE id = $1', [req.params.id]);
+      if (invResult.rows.length === 0 || invResult.rows[0].user_id !== req.user.id) {
+        fs.unlink(req.file.path, () => {});
+        return res.status(404).json({ error: 'Not found' });
+      }
+
+      let result;
+      if (type === 'gallery') {
+        result = await pool.query(
+          `UPDATE invitations SET gallery_photos = array_append(gallery_photos, $1), updated_at = NOW() WHERE id = $2 RETURNING *`,
+          [photoUrl, req.params.id]
+        );
+      } else {
+        result = await pool.query(
+          `UPDATE invitations SET cover_photo_url = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
+          [photoUrl, req.params.id]
+        );
+      }
+      res.json(result.rows[0]);
+    } catch (dbErr) {
+      fs.unlink(req.file.path, () => {});
+      res.status(500).json({ error: dbErr.message });
+    }
+  });
+});
+
 // ============ GUESTS ROUTES ============
 
 app.post('/api/invitations/:id/guests', verifyToken, async (req, res) => {
@@ -159,7 +256,7 @@ app.get('/api/invitations/:id/guests', verifyToken, async (req, res) => {
 
 app.get('/api/public/invitations/:url', async (req, res) => {
   try {
-    const result = await pool.query('SELECT id, couple_name_1, couple_name_2, event_date, event_time, venue, accent_color FROM invitations WHERE invitation_url = $1 AND status = $2', [req.params.url, 'published']);
+    const result = await pool.query('SELECT id, couple_name_1, couple_name_2, event_date, event_time, venue, accent_color, cover_photo_url, gallery_photos FROM invitations WHERE invitation_url = $1 AND status = $2', [req.params.url, 'published']);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Not found' });
     res.json(result.rows[0]);
   } catch (err) {

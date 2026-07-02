@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import QRCode from 'qrcode';
 import useAuthStore from '../stores/authStore';
 import useInvitationStore from '../stores/invitationStore';
 
@@ -7,7 +8,7 @@ export default function Editor() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, token } = useAuthStore();
-  const { current, updateInvitation } = useInvitationStore();
+  const { current, fetchInvitation, updateInvitation, publishInvitation, uploadPhoto } = useInvitationStore();
   const [form, setForm] = useState({
     coupleName1: '',
     coupleName2: '',
@@ -17,13 +18,21 @@ export default function Editor() {
     accentColor: '#d4a373',
     fontFamily: 'Playfair Display',
   });
+  const [publishing, setPublishing] = useState(false);
+  const [publishError, setPublishError] = useState('');
+  const [qrDataUrl, setQrDataUrl] = useState('');
+  const [uploadingCover, setUploadingCover] = useState(false);
+
+  useEffect(() => {
+    if (id && token) fetchInvitation(token, id);
+  }, [id, token]);
 
   useEffect(() => {
     if (current) {
       setForm({
         coupleName1: current.couple_name_1 || '',
         coupleName2: current.couple_name_2 || '',
-        eventDate: current.event_date || '',
+        eventDate: current.event_date ? current.event_date.slice(0, 10) : '',
         eventTime: current.event_time || '',
         venue: current.venue || '',
         accentColor: current.accent_color || '#d4a373',
@@ -32,9 +41,47 @@ export default function Editor() {
     }
   }, [current]);
 
+  const publicUrl = current?.invitation_url
+    ? `${window.location.origin}/invite/${current.invitation_url}`
+    : '';
+
+  useEffect(() => {
+    if (publicUrl) {
+      QRCode.toDataURL(publicUrl, { margin: 1, width: 160 }).then(setQrDataUrl).catch(() => setQrDataUrl(''));
+    } else {
+      setQrDataUrl('');
+    }
+  }, [publicUrl]);
+
   const handleSave = async () => {
     await updateInvitation(token, id, form);
     alert('Invitation saved!');
+  };
+
+  const handlePublish = async () => {
+    setPublishing(true);
+    setPublishError('');
+    try {
+      await updateInvitation(token, id, form);
+      await publishInvitation(token, id);
+    } catch (err) {
+      setPublishError(err.message || 'Failed to publish');
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  const handleCoverUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingCover(true);
+    try {
+      await uploadPhoto(token, id, file, 'cover');
+    } catch (err) {
+      alert(err.message || 'Photo upload failed');
+    } finally {
+      setUploadingCover(false);
+    }
   };
 
   const colors = ['#d4a373', '#c9704d', '#6b5344', '#9b7d6b', '#b8956f', '#8b6f47'];
@@ -96,6 +143,25 @@ export default function Editor() {
           </div>
 
           <div>
+            <label className="block text-sm font-semibold mb-2 text-slate-900">Cover Photo</label>
+            {current?.cover_photo_url && (
+              <img
+                src={current.cover_photo_url}
+                alt="Cover"
+                className="w-full h-32 object-cover rounded mb-2 border border-slate-300"
+              />
+            )}
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              onChange={handleCoverUpload}
+              disabled={uploadingCover}
+              className="w-full text-sm"
+            />
+            {uploadingCover && <p className="text-xs text-slate-500 mt-1">Uploading…</p>}
+          </div>
+
+          <div>
             <label className="block text-sm font-semibold mb-3 text-slate-900">Accent Color</label>
             <div className="grid grid-cols-3 gap-2">
               {colors.map((color) => (
@@ -137,6 +203,36 @@ export default function Editor() {
             >
               Back
             </button>
+          </div>
+
+          <div className="border-t border-slate-200 pt-6">
+            {current?.status === 'published' ? (
+              <div className="text-center">
+                <p className="text-sm font-semibold text-green-700 mb-3">✅ Published</p>
+                {qrDataUrl && <img src={qrDataUrl} alt="QR code" className="mx-auto mb-3 rounded" />}
+                <input
+                  readOnly
+                  value={publicUrl}
+                  onClick={(e) => e.target.select()}
+                  className="w-full px-2 py-1 border border-slate-300 rounded text-xs text-center mb-2"
+                />
+                <button
+                  onClick={() => navigator.clipboard.writeText(publicUrl)}
+                  className="w-full py-2 border border-slate-300 rounded text-sm font-semibold hover:bg-slate-50"
+                >
+                  Copy Link
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handlePublish}
+                disabled={publishing}
+                className="w-full py-2 bg-emerald-700 text-white rounded font-semibold hover:bg-emerald-800 disabled:opacity-50"
+              >
+                {publishing ? 'Publishing…' : 'Publish Invitation'}
+              </button>
+            )}
+            {publishError && <p className="text-xs text-red-600 mt-2 text-center">{publishError}</p>}
           </div>
         </div>
       </div>

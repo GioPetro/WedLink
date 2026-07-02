@@ -1,15 +1,15 @@
-postgresimage: postgres:15
-environment:
-  POSTGRES_DB: wedlink
-  POSTGRES_USER: wedlink_user
-  POSTGRES_PASSWORD: changeme
-ports:
-  - "5432:5432"
-
----
-version: '3.8'
-
 services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: wedlink
+      POSTGRES_USER: wedlink_user
+      POSTGRES_PASSWORD: changeme
+    ports:
+      - "5432:5432"
+    volumes:
+      - wedlink_pgdata:/var/lib/postgresql/data
+
   backend:
     build: .
     ports:
@@ -29,3 +29,6 @@ services:
     ports:
       - "5173:5173"
     command: npm run dev
+
+volumes:
+  wedlink_pgdata:

@@ -19,6 +19,19 @@ const useInvitationStore = create((set) => ({
     }
   },
 
+  fetchInvitation: async (token, id) => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/invitations/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      set({ current: data });
+      return data;
+    } catch (err) {
+      console.error(err);
+    }
+  },
+
   createInvitation: async (token, invitation) => {
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/invitations`, {
@@ -54,6 +67,54 @@ const useInvitationStore = create((set) => ({
       }));
     } catch (err) {
       console.error(err);
+    }
+  },
+
+  publishInvitation: async (token, id) => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/invitations/${id}/publish`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Publish failed');
+      }
+      const data = await res.json();
+      set((state) => ({
+        invitations: state.invitations.map((inv) => (inv.id === id ? data : inv)),
+        current: data,
+      }));
+      return data;
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  },
+
+  uploadPhoto: async (token, id, file, type = 'cover') => {
+    const formData = new FormData();
+    formData.append('photo', file);
+    formData.append('type', type);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/invitations/${id}/photos`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Upload failed');
+      }
+      const data = await res.json();
+      set((state) => ({
+        invitations: state.invitations.map((inv) => (inv.id === id ? data : inv)),
+        current: data,
+      }));
+      return data;
+    } catch (err) {
+      console.error(err);
+      throw err;
     }
   },
 
